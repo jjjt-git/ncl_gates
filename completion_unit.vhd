@@ -6,7 +6,7 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-library ncl_xilinx_gates;
+library ncl_gates;
 
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -24,7 +24,7 @@ architecture Structural of completion_unit is
 begin
 
     single_completion_chain: for i in bit_width-1 downto 0 generate
-        single_completion_gate : entity ncl_xilinx_gates.TH12 port map (
+        single_completion_gate : entity ncl_gates.TH12 port map (
             A => input(2*i+1),
             B => input(2*i),
             Z => single_completion(i)
@@ -33,7 +33,7 @@ begin
     
     single_completion_negated <= not single_completion;
     
-    completion_recursion : entity ncl_xilinx_gates.NCL_completion_recursion_unit
+    completion_recursion : entity ncl_gates.NCL_completion_recursion_unit
     generic map ( width => bit_width )
     port map (  vector_input => single_completion_negated,
                 result_output => Ko );
