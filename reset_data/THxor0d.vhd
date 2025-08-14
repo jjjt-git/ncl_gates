@@ -1,0 +1,44 @@
+----------------------------------------------------------------------------------
+-- Exploring Implementations of Null Convention Logic on FPGAs
+-- (c) Henry Mueller 2024
+-- This work is licensed under GPLv3.
+-- File Part of Development Release 0.1.0
+----------------------------------------------------------------------------------
+
+library IEEE;
+library UNISIM;
+
+use IEEE.STD_LOGIC_1164.ALL;
+use UNISIM.VComponents.all;
+
+entity THxor0d is
+    port ( A : in STD_LOGIC;
+           B : in STD_LOGIC;
+           C : in STD_LOGIC;
+           D : in STD_LOGIC;
+           R : in STD_LOGIC;
+           Z : out STD_LOGIC);
+end THxor0d;
+
+architecture Structural of THxor0d is
+
+    signal output : std_logic;
+
+begin
+
+    Z <= output;
+    
+    NCL_GATE_FB4 : LUT6
+    generic map (
+        INIT => X"FFFFFFFFFFFEF888")
+    port map (
+        O => output,
+        I0 => A,
+        I1 => B,
+        I2 => C,
+        I3 => D,
+        I4 => output,
+        I5 => R
+    );
+
+end Structural;
