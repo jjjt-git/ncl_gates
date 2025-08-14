@@ -24,7 +24,7 @@ architecture Structural of TH13 is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE : LUT3
     generic map (

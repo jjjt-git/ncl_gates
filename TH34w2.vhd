@@ -25,7 +25,7 @@ architecture Structural of TH34w2 is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE_FB4 : LUT5
     generic map (

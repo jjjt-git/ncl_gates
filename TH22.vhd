@@ -23,7 +23,7 @@ architecture Structural of TH22 is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE_FB2 : LUT3
     generic map (

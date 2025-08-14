@@ -24,7 +24,7 @@ architecture Structural of TH22n is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE_FB2 : LUT4
     generic map (

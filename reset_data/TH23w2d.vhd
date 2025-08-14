@@ -25,7 +25,7 @@ architecture Structural of TH23w2d is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE_FB3 : LUT5
     generic map (

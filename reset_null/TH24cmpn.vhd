@@ -26,7 +26,7 @@ architecture Structural of TH24cmpn is
 
 begin
 
-    Z <= output;
+    Z <= transport output after 1 ns;
     
     NCL_GATE_FB4 : LUT6
     generic map (
