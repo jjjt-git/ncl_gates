@@ -13,7 +13,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity completion_unit is
 Generic ( bit_width : integer := 1);
 port ( input: in std_logic_vector (2*bit_width-1 downto 0);
-       Ko : out std_logic := '1');
+       Ko : out std_logic);
 end completion_unit;
 
 architecture Structural of completion_unit is
