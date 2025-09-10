@@ -12,14 +12,14 @@ library UNISIM;
 use IEEE.STD_LOGIC_1164.ALL;
 use UNISIM.VComponents.all;
 
-entity TH22d_22n_SA_AA is
+entity TH22n_22d_SA_AA is
     port ( R : in STD_LOGIC;
            A : in STD_LOGIC;
            B1, B2 : in STD_LOGIC;
            Z1, Z2 : out STD_LOGIC);
-end TH22d_22n_SA_AA;
+end TH22n_22d_SA_AA;
 
-architecture Structural of TH22d_22n_SA_AA is
+architecture Structural of TH22n_22d_SA_AA is
 
     signal neg_R, output1_buf, output2_buf, output1, output2 : std_logic;
     
@@ -35,7 +35,7 @@ architecture Structural of TH22d_22n_SA_AA is
     constant SET_O1 : bit_vector(63 downto 0) := LUT_A and LUT_B1;
     constant SET_O2 : bit_vector(63 downto 0) := LUT_A and LUT_B2;
     
-    constant CONF_O1 : bit_vector(63 downto 0) := (not CLR_O1 and SET_O1) or (not CLR_O1 and not SET_O1 and not LUT_FB1); -- CLR ? 0 : SET ? 1 : ~FB
+    constant CONF_O1 : bit_vector(63 downto 0) := (not CLR_O1 and SET_O1) or (not CLR_O1 and not SET_O1 and not LUT_FB1); -- CLR ? 0 : SET ? 1 : FB
     constant CONF_O2 : bit_vector(63 downto 0) := (not CLR_O2 and SET_O2) or (not CLR_O2 and not SET_O2 and LUT_FB2); -- CLR ? 0 : SET ? 1 : FB
     
     constant CONFIG : bit_vector(63 downto 0) := (LUT_nR and CONF_O1) or (not LUT_nR and CONF_O2); -- nR ? O1 : O2
@@ -70,11 +70,11 @@ begin
 		
 	output1 <= transport output1_buf after 1 ps;
 		
-	NCL_MERGED_RST: LDCE
+	NCL_MERGED_RST: LDPE
 		generic map (
 			INIT => '1'
 		) port map (
-			CLR => R,
+			PRE => R,
 			
 			D => output2_buf,
 			Q => output2,

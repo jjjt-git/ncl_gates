@@ -21,7 +21,24 @@ end TH22n_22n_SA_AA;
 
 architecture Structural of TH22n_22n_SA_AA is
 
-    signal neg_R, output2_buf, output1, output2 : std_logic;
+    signal neg_R, output1_buf, output2_buf, output1, output2 : std_logic;
+    
+    constant LUT_nR  : bit_vector(63 downto 0) := x"FFFF_FFFF_0000_0000";
+    constant LUT_A   : bit_vector(63 downto 0) := x"FFFF_0000_FFFF_0000";
+    constant LUT_B1  : bit_vector(63 downto 0) := x"FF00_FF00_FF00_FF00";
+    constant LUT_B2  : bit_vector(63 downto 0) := x"F0F0_F0F0_F0F0_F0F0";
+    constant LUT_FB1 : bit_vector(63 downto 0) := x"CCCC_CCCC_CCCC_CCCC";
+    constant LUT_FB2 : bit_vector(63 downto 0) := x"AAAA_AAAA_AAAA_AAAA";
+    
+    constant CLR_O1 : bit_vector(63 downto 0) := not LUT_A and not LUT_B1;
+    constant CLR_O2 : bit_vector(63 downto 0) := not LUT_A and not LUT_B2;
+    constant SET_O1 : bit_vector(63 downto 0) := LUT_A and LUT_B1;
+    constant SET_O2 : bit_vector(63 downto 0) := LUT_A and LUT_B2;
+    
+    constant CONF_O1 : bit_vector(63 downto 0) := (not CLR_O1 and SET_O1) or (not CLR_O1 and not SET_O1 and LUT_FB1); -- CLR ? 0 : SET ? 1 : FB
+    constant CONF_O2 : bit_vector(63 downto 0) := (not CLR_O2 and SET_O2) or (not CLR_O2 and not SET_O2 and LUT_FB2); -- CLR ? 0 : SET ? 1 : FB
+    
+    constant CONFIG : bit_vector(63 downto 0) := (LUT_nR and CONF_O1) or (not LUT_nR and CONF_O2); -- nR ? O1 : O2
 
 begin
 
@@ -39,7 +56,7 @@ begin
     
     NCL_GATE_MERGED_FB0_FB1: LUT6_2
 		generic map (
-			INIT => X"FFCCCC00FAFAA0A0"
+			INIT => CONFIG
 		) port map (
 			I5 => neg_R,
 			I4 => A,
@@ -48,9 +65,11 @@ begin
 			I1 => output1,
 			I0 => output2,
 			
-			O6 => output1,
+			O6 => output1_buf,
 			O5 => output2_buf
 		);
+		
+	output1 <= transport output1_buf after 1 ps;
 		
 	NCL_MERGED_RST: LDCE
 		generic map (
