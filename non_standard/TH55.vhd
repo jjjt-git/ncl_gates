@@ -1,8 +1,9 @@
 ----------------------------------------------------------------------------------
 -- Exploring Implementations of Null Convention Logic on FPGAs
 -- (c) Henry Mueller 2024
+-- (c) Jacob Tilger 2025
 -- This work is licensed under GPLv3.
--- File Part of Development Release 0.1.0
+-- File Part of Development Release 0.2.0
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -24,32 +25,18 @@ entity TH55 is
 end TH55;
 
 architecture Structural of TH55 is
-
-    signal output : std_logic;
-    
-    constant CLEAR_SET  : bit_vector(31 downto 0) := x"0000_0001";
-    constant ASSERT_SET : bit_vector(31 downto 0) := A5 and B5 and C5 and D5 and E5;
-
-	constant FB_VALUE     : bit_vector(63 downto 0) := x"FFFF_FFFF_0000_0000"; -- I5 is FB
-	constant CLEAR_F_SET  : bit_vector(63 downto 0) := CLEAR_SET & CLEAR_SET;
-	constant ASSERT_F_SET : bit_vector(63 downto 0) := ASSERT_SET & ASSERT_SET;
-	
-	constant CONFIG : bit_vector(63 downto 0) := (not CLEAR_F_SET and ASSERT_F_SET) or (not CLEAR_F_SET and not ASSERT_F_SET and FB_VALUE);
 begin
 
-	Z <= transport output after 1 ns;
-
-    NCL_GATE_FB5: LUT6
+	gate: entity ncl_gates.fb_5
 		generic map (
-			INIT => CONFIG
+			ASSERT_SET => A5 and B5 and C5 and D5 and E5
 		) port map (
-			I0 => A,
-			I1 => B,
-			I2 => C,
-			I3 => D,
-			I4 => E,
-			I5 => output,
-			O  => output
-		);
+			A => A,
+			B => B,
+			C => C,
+			D => D,
+			E => E,
+			Z => Z
+		); 
 
 end Structural;

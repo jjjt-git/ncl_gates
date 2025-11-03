@@ -13,15 +13,18 @@ use IEEE.STD_LOGIC_1164.ALL;
 use UNISIM.VComponents.all;
 
 entity TH22n_22n_SA_AA is
-    port ( R : in STD_LOGIC;
-           A : in STD_LOGIC;
-           B1, B2 : in STD_LOGIC;
-           Z1, Z2 : out STD_LOGIC);
+	port (
+		R : in STD_LOGIC;
+		A : in STD_LOGIC;
+		B1, B2 : in STD_LOGIC;
+		Z1, Z2 : out STD_LOGIC;
+		Z1_Z2_or : out std_logic
+	);
 end TH22n_22n_SA_AA;
 
 architecture Structural of TH22n_22n_SA_AA is
 
-    signal neg_R, output1_buf, output2_buf, output1, output2 : std_logic;
+    signal output1_skip, output1_buf, output2_buf, output1, output2 : std_logic;
     
     constant LUT_nR  : bit_vector(63 downto 0) := x"FFFF_FFFF_0000_0000";
     constant LUT_A   : bit_vector(63 downto 0) := x"FFFF_0000_FFFF_0000";
@@ -40,15 +43,18 @@ architecture Structural of TH22n_22n_SA_AA is
     
     constant CONFIG : bit_vector(63 downto 0) := (LUT_nR and CONF_O1) or (not LUT_nR and CONF_O2); -- nR ? O1 : O2
 
+	attribute BEL : string;
+	attribute BEL of NCL_GATE_MERGED_FB0_FB1 : label is "B6LUT";
+	attribute BEL of NCL_MERGED_RST1SKIP     : label is "F7AMUX";
+	attribute BEL of NCL_MERGED_RST1         : label is "AFF";
+	attribute BEL of NCL_MERGED_RST2         : label is "BFF";
+	
+	attribute RLOC : string;
+	attribute RLOC of NCL_GATE_MERGED_FB0_FB1 : label is "X0Y0";
+	attribute RLOC of NCL_MERGED_RST1SKIP     : label is "X0Y0";
+	attribute RLOC of NCL_MERGED_RST1         : label is "X0Y0";
+	attribute RLOC of NCL_MERGED_RST2         : label is "X0Y0";
 begin
-
-	process(R) begin
-		if falling_edge(R) then
-			assert A = '0' or B2 = '0' report "A or B2 must be '0' at the end of reset, to ensure correct operation" severity FAILURE;
-		end if;
-	end process;
-
-	neg_R <= not R;
 	
 	Z1 <= transport output1 after 1 ns;
     
@@ -58,7 +64,7 @@ begin
 		generic map (
 			INIT => CONFIG
 		) port map (
-			I5 => neg_R,
+			I5 => '1',
 			I4 => A,
 			I3 => B1,
 			I2 => B2,
@@ -69,11 +75,30 @@ begin
 			O5 => output2_buf
 		);
 		
-	output1 <= transport output1_buf after 1 ps;
+	NCL_MERGED_RST1SKIP: MUXF7
+		port map (
+			O => output1_skip, 
+			I0 => output1_buf,
+			I1 => '-',
+			S => '0'
+		);
 		
-	NCL_MERGED_RST: LDCE
+	NCL_MERGED_RST1: LDCE
 		generic map (
-			INIT => '1'
+			INIT => '0'
+		) port map (
+			CLR => R,
+			
+			D => output1_skip,
+			Q => output1,
+			
+			G  => '1',
+			GE => '1'
+		);
+		
+	NCL_MERGED_RST2: LDCE
+		generic map (
+			INIT => '0'
 		) port map (
 			CLR => R,
 			
@@ -83,5 +108,60 @@ begin
 			G  => '1',
 			GE => '1'
 		);
+		
+	WITH_OR: if true generate
+--		signal CO, DI, S : std_logic_vector(3 downto 0);
+--		signal CI, CYINIT : std_logic;
+		
+--		attribute RLOC of NCL_MERGED_OR        : label is "X0Y0";
+
+		signal negR, OA, OB, OC: std_logic;
+	begin
+	
+		negR <= not R;
+		
+		MUXA: MUXCY
+			port map (
+				S  => '-',
+				DI => '1',
+				CI => '1',
+				O  => OA
+			);
+		
+		MUXB: MUXCY
+			port map (
+				S  => output1_buf,
+				DI => output2_buf,
+				CI => OA,
+				O  => OB
+			);
+			
+		MUXC: MUXCY
+			port map (
+				S  => negR,
+				DI => '0',
+				CI => OB,
+				O  => OC
+			);
+		
+		Z1_Z2_or <= transport OC after 2ns;
+	
+--		CYINIT <= '1';
+--		CI     <= '-';
+--		
+--		S  <= (1 => output1_buf, others => '-');
+--		DI <= (0 => '1', 1 => output2_buf, others => '-');
+--		
+--		Z1_Z2_or <= transport CO(1) after 2ns;
+--		
+--		NCL_MERGED_OR : CARRY4
+--			port map (
+--				CO     => CO,
+--				CI     => CI,
+--				CYINIT => CYINIT,
+--				DI     => DI,
+--				S      => S
+--			);
+	end generate;
 
 end Structural;

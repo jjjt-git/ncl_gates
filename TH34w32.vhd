@@ -1,8 +1,9 @@
 ----------------------------------------------------------------------------------
 -- Exploring Implementations of Null Convention Logic on FPGAs
 -- (c) Henry Mueller 2024
+-- (c) Jacob Tilger 2025
 -- This work is licensed under GPLv3.
--- File Part of Development Release 0.1.0
+-- File Part of Development Release 0.2.0
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -10,6 +11,9 @@ library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
 use UNISIM.VComponents.all;
+
+library ncl_gates;
+use ncl_gates.MACRO_CONFIG.all;
 
 entity TH34w32 is
     port ( A : in STD_LOGIC;
@@ -20,23 +24,17 @@ entity TH34w32 is
 end TH34w32;
 
 architecture Structural of TH34w32 is
-
-    signal output : std_logic;
-
 begin
 
-    Z <= transport output after 1 ns;
-    
-    NCL_GATE_FB4 : LUT5
-    generic map (
-        INIT => X"FFFEEEEA")
-    port map (
-        O => output,
-        I0 => A,
-        I1 => B,
-        I2 => C,
-        I3 => D,
-        I4 => output
-    );
+	gate: entity ncl_gates.fb_4
+		generic map (
+			ASSERT_SET => A5 or (B5 and C5) or (B5 and D5)
+		) port map (
+			A => A,
+			B => B,
+			C => C,
+			D => D,
+			Z => Z
+		);
 
 end Structural;

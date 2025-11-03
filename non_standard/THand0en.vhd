@@ -1,8 +1,9 @@
 ----------------------------------------------------------------------------------
 -- Exploring Implementations of Null Convention Logic on FPGAs
 -- (c) Henry Mueller 2024
+-- (c) Jacob Tilger 2025
 -- This work is licensed under GPLv3.
--- File Part of Development Release 0.1.0
+-- File Part of Development Release 0.2.0
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -11,31 +12,34 @@ library UNISIM;
 use IEEE.STD_LOGIC_1164.ALL;
 use UNISIM.VComponents.all;
 
-entity TH14_Zneg is
+library ncl_gates;
+use ncl_gates.MACRO_CONFIG.all;
+
+entity THand0en is
     port ( A : in STD_LOGIC;
            B : in STD_LOGIC;
            C : in STD_LOGIC;
            D : in STD_LOGIC;
+           E : in STD_LOGIC;
+           R : in STD_LOGIC;
            Z : out STD_LOGIC);
-end TH14_Zneg;
+end THand0en;
 
-architecture Structural of TH14_Zneg is
-
-    signal output : std_logic;
-
+architecture Structural of THand0en is
 begin
 
-    Z <= transport output after 1 ns;
-    
-    NCL_GATE : LUT4
-    generic map (
-        INIT => X"0001")
-    port map (
-        O => output,
-        I0 => A,
-        I1 => B,
-        I2 => C,
-        I3 => D
-    );
+	gate: entity ncl_gates.fb_5_rst
+		generic map (
+			RST_VALUE => '0',
+			ASSERT_SET => (A5 and B5 and C5) or (A5 and C5 and D5) or (A5 and B5 and E5)
+		) port map (
+			A => A,
+			B => B,
+			C => C,
+			D => D,
+			E => E,
+			R => R,
+			Z => Z
+		);
 
 end Structural;
