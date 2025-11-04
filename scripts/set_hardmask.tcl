@@ -1,4 +1,4 @@
-write_checkpoint -force /tmp/checkpoint.dcp
+#write_checkpoint -force /tmp/checkpoint.dcp
 
 set route_work ""
 
@@ -53,7 +53,7 @@ foreach gate $simple_gates {
 	}
 }
 
-write_checkpoint -force /tmp/checkpoint_post_simple.dcp
+#write_checkpoint -force /tmp/checkpoint_post_simple.dcp
 
 foreach gate $latch_rst_gates {
 	set rst_gate [get_cells -of [get_nets -of [get_pins -of $gate -filter "REF_PIN_NAME == O"]] -filter "PRIMITIVE_GROUP == FLOP_LATCH"]
@@ -92,10 +92,10 @@ foreach gate $latch_rst_gates {
 	}
 }
 
-write_checkpoint -force /tmp/checkpoint_post_latch_rst.dcp
+#write_checkpoint -force /tmp/checkpoint_post_latch_rst.dcp
 
 if {[llength $route_work] != 0} {
 	route_design -delay -pins $route_work
 }
 
-write_checkpoint -force /tmp/checkpoint_fb_routed.dcp
+#write_checkpoint -force /tmp/checkpoint_fb_routed.dcp
