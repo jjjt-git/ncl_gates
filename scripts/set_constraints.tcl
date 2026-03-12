@@ -1,4 +1,4 @@
-write_checkpoint -force /tmp/checkpoint.dcp
+#write_checkpoint -force /tmp/checkpoint.dcp
 
 set ack [get_cells -leaf -filter "NCL_WIRE_TYPE == ACK"]
 set bridge [get_cells -leaf -filter "NCL_WIRE_TYPE == NCL_CLK"]
