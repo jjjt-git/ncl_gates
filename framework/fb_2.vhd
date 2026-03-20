@@ -19,7 +19,7 @@ architecture Structural of fb_2 is
 	constant CLEAR_F_SET  : bit_vector(7 downto 0) := CLEAR_SET(3 downto 0) & CLEAR_SET(3 downto 0);
 	constant ASSERT_F_SET : bit_vector(7 downto 0) := ASSERT_SET(3 downto 0) & ASSERT_SET(3 downto 0);
 	
-	constant CONFIG : bit_vector(7 downto 0) := (not CLEAR_F_SET and ASSERT_F_SET) or (not CLEAR_F_SET and not ASSERT_F_SET and FB_VALUE);
+	constant CONFIG : bit_vector(7 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
 	
 	signal output : std_logic;
 begin

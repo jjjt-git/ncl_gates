@@ -22,7 +22,7 @@ architecture Structural of fb_2_rst is
 	
 	constant RST_VEC : bit_vector(7 downto 0) := (others => RST_VALUE);
 	
-	constant FUNC : bit_vector(7 downto 0) := (not CLEAR_F_SET and ASSERT_F_SET) or (not CLEAR_F_SET and not ASSERT_F_SET and FB_VALUE);
+	constant FUNC : bit_vector(7 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
 	
 	constant CONFIG : bit_vector(15 downto 0) := RST_VEC & FUNC;
 	
