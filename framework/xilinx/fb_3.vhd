@@ -3,43 +3,38 @@ use IEEE.STD_LOGIC_1164.ALL;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-entity fb_3_rst is
+entity fb_3 is
 	generic (
-		RST_VALUE   : bit;
 		CLEAR_SET   : bit_vector(31 downto 0) := x"0000_0001";
 		ASSERT_SET  : bit_vector(31 downto 0)
 	);
 	port (
-		A, B, C, R : in std_logic;
+		A, B, C : in std_logic;
 		Z : out std_logic
 	);
-end fb_3_rst;
+end fb_3;
 
-architecture Structural of fb_3_rst is
+architecture Structural of fb_3 is
 	constant FB_VALUE     : bit_vector(15 downto 0) := x"FF00"; -- I3 is FB
 	constant CLEAR_F_SET  : bit_vector(15 downto 0) := CLEAR_SET(7 downto 0) & CLEAR_SET(7 downto 0);
 	constant ASSERT_F_SET : bit_vector(15 downto 0) := ASSERT_SET(7 downto 0) & ASSERT_SET(7 downto 0);
 	
-	constant RST_VEC : bit_vector(15 downto 0) := (others => RST_VALUE);
+	constant CONFIG : bit_vector(15 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
 	
-	constant FUNC : bit_vector(15 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
-	
-	constant CONFIG : bit_vector(31 downto 0) := RST_VEC & FUNC;
-	
-	signal output : std_logic;
+	signal output, output_p : std_logic;
 begin
 
-	Z <= transport output after 1 ns;
+	Z <= output;
+	output_p <= transport output after 1 ns;
 	
-	NCL_GATE_SIMPLE: LUT5
+	NCL_GATE_SIMPLE: LUT4
 		generic map (
 			INIT => CONFIG
 		) port map (
 			I0 => A,
 			I1 => B,
 			I2 => C,
-			I3 => output,
-			I4 => R,
+			I3 => output_p,
 			O  => output
 		);
 	
