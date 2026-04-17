@@ -20,7 +20,6 @@ entity TH44w2 is
            B : in STD_LOGIC;
            C : in STD_LOGIC;
            D : in STD_LOGIC;
-           R : in STD_LOGIC;
            Z : out STD_LOGIC);
 end TH44w2;
 
