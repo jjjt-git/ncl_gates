@@ -26,11 +26,10 @@ architecture Structural of fb_3_rst is
 	
 	constant CONFIG : bit_vector(31 downto 0) := RST_VEC & FUNC;
 	
-	signal output, output_p : std_logic;
+	signal output : std_logic;
 begin
 
-	Z <= output;
-	output_p <= transport output after 1 ns;
+	Z <= transport output after 1 ns;
 	
 	NCL_GATE_SIMPLE: LUT5
 		generic map (
@@ -39,7 +38,7 @@ begin
 			I0 => A,
 			I1 => B,
 			I2 => C,
-			I3 => output_p,
+			I3 => output,
 			I4 => R,
 			O  => output
 		);

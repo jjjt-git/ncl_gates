@@ -21,11 +21,10 @@ architecture Structural of fb_2 is
 	
 	constant CONFIG : bit_vector(7 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
 	
-	signal output, output_p : std_logic;
+	signal output : std_logic;
 begin
 
-	Z <= output;
-	output_p <= transport output after 1 ns;
+	Z <= transport output after 1 ns;
 	
 	NCL_GATE_SIMPLE: LUT3
 		generic map (
@@ -33,7 +32,7 @@ begin
 		) port map (
 			I0 => A,
 			I1 => B,
-			I2 => output_p,
+			I2 => output,
 			O  => output
 		);
 	

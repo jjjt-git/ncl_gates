@@ -22,14 +22,13 @@ architecture Structural of fb_5_rst is
 	
 	constant CONFIG : bit_vector(63 downto 0) := ASSERT_F_SET or (not CLEAR_F_SET and FB_VALUE);
 	
-	signal output, output_i, output_p : std_logic;
+	signal output, output_i : std_logic;
 	
 	attribute RLOC : string;
 	attribute RLOC of NCL_GATE_EXTRST : label is "X0Y0";
 begin
 
-	Z <= output;
-	output_p <= transport output after 1 ns;
+	Z <= transport output after 1 ns;
 	
 	NCL_GATE_EXTRST: LUT6
 		generic map (
@@ -40,7 +39,7 @@ begin
 			I2 => C,
 			I3 => D,
 			I4 => E,
-			I5 => output_p,
+			I5 => output,
 			O  => output_i
 		);
 	

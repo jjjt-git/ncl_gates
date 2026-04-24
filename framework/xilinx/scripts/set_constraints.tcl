@@ -49,8 +49,7 @@ foreach cc $inbridge_enc {
 	set data_pin  [get_pins -of $cc -filter "REF_PIN_NAME == I1"]
 	
 	set_data_check -rise_from $valid_pin -to $data_pin -setup 0
-	set_data_check -fall_from $valid_pin -to $data_pin -hold  0
-	
+	set_multicycle_path 2 -setup -to $data_pin
 	group_path -name "NCL_INBRIDGE_ENC" -to $data_pin
 }
 
