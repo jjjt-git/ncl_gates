@@ -60,7 +60,7 @@ begin
 		end if;
 	end process di;
 	
-	ki_rm: FDSE
+	ki_rm: FDSE_1
 		port map (
 			S  => rst,
 			C  => clk,
