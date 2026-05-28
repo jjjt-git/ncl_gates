@@ -29,7 +29,7 @@ begin
 	gate: entity ncl_gates.fb_3_rst
 		generic map (
 			RST_VALUE => '1',
-			ASSERT_SET => (A5 and B5) or (A5 and C5) or (B5 or C5)
+			ASSERT_SET => (A5 and B5) or (A5 and C5) or (B5 and C5)
 		) port map (
 			A => A,
 			B => B,
