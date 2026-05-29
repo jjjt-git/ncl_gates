@@ -60,7 +60,7 @@ begin
 		end if;
 	end process di;
 	
-	ki_rm: FDSE_1
+	ki_rm: FDSE
 		port map (
 			S  => rst,
 			C  => clk,
@@ -70,7 +70,7 @@ begin
 			Q => ki_p
 		);
 	
-	ki_fs: FDSE_1
+	ki_fs: FDSE
 		port map (
 			S  => rst,
 			C  => clk,
@@ -103,5 +103,5 @@ begin
 	ce <= not valid_p or not stall;
 	
 	valid <= valid_p;
-	valid_p <= not ki_sp and ki_s;
+	valid_p <= ki_sp and not ki_s;
 end Behavioural;
