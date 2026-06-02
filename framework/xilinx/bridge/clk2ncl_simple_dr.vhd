@@ -5,22 +5,22 @@ use ieee.math_real.all;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-entity clk2ncl is
+entity clk2ncl_simple_dr is
 	generic (
-		width: integer := 2
+		dr_width: integer := 2
 	);
 	port (
 		clk, rst: in std_logic;
-		do_0, do_1: out std_logic_vector(width - 1 downto 0);
+		dro_0, dro_1: out std_logic_vector(dr_width - 1 downto 0);
 		ki: in std_logic;
 		valid: in std_logic;
 		stall: out std_logic;
-		di: in std_logic_vector(width - 1 downto 0)
+		dri: in std_logic_vector(dr_width - 1 downto 0)
 	);
-end clk2ncl;
+end clk2ncl_simple_dr;
 
-architecture Behavioural of clk2ncl is
-	signal do_1m, do_0m, d_r : std_logic_vector(width - 1 downto 0);
+architecture Behavioural of clk2ncl_simple_dr is
+	signal do_1m, do_0m, d_r : std_logic_vector(dr_width - 1 downto 0);
 	signal v_r : std_logic;
 	
 	attribute NCL_WIRE_TYPE : string;
@@ -38,12 +38,12 @@ architecture Behavioural of clk2ncl is
 begin
 	stall <= v_r;
 	
-	do_0 <= do_0m;
-	do_1 <= do_1m;
+	dro_0 <= do_0m;
+	dro_1 <= do_1m;
 	
 	ki_edge <= not ki_s and ki_sn;
 
-	mark_d: for ii in 0 to width - 1 generate
+	mark_d: for ii in 0 to dr_width - 1 generate
 		attribute NCL_WIRE_TYPE of do0_cross : label is "NCL_CLK";
 		attribute DONT_TOUCH    of do0_cross : label is true;
 		
@@ -65,7 +65,7 @@ begin
 			);
 	end generate;
 	
-	encode: for ii in 0 to width - 1 generate
+	encode: for ii in 0 to dr_width - 1 generate
 		constant VALID_BITS : bit_vector(7 downto 0) := "10101010";
 		constant DATA_BITS  : bit_vector(7 downto 0) := "11001100";
 		constant KI_BITS    : bit_vector(7 downto 0) := "11110000";
@@ -104,7 +104,7 @@ begin
 			if rst = '1' then
 				d_r <= (others => '0');
 			elsif v_r = '0' and valid = '1' then
-				d_r <= di;
+				d_r <= dri;
 			end if;
 		end if;
 		

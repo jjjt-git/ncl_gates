@@ -5,23 +5,22 @@ use UNISIM.VComponents.all;
 
 library ncl_components;
 
-entity ncl2clk is
+entity ncl2clk_simple_dr is
 	generic (
-		width: integer := 2
+		dr_width: integer := 2
 	);
 	port (
 		clk, rst: in std_logic;
-		di_0, di_1: in std_logic_vector(width - 1 downto 0);
+		dri_0, dri_1: in std_logic_vector(dr_width - 1 downto 0);
 		ko: out std_logic;
 		valid: out std_logic;
 		stall: in  std_logic;
-		do: out std_logic_vector(width - 1 downto 0)
+		dro: out std_logic_vector(dr_width - 1 downto 0)
 	);
-end ncl2clk;
+end ncl2clk_simple_dr;
 
-architecture Behavioural of ncl2clk is
+architecture Behavioural of ncl2clk_simple_dr is
 	attribute NCL_WIRE_TYPE : string;
-	attribute RLOC          : string;
 	attribute DONT_TOUCH    : boolean;
 	attribute ASYNC_REG     : boolean;
 	
@@ -31,10 +30,7 @@ architecture Behavioural of ncl2clk is
 	attribute ASYNC_REG of ki_fs : label is true;
 	attribute ASYNC_REG of ki_rs : label is true;
 	
-	attribute RLOC of ki_rm : label is "X0Y0";
-	attribute RLOC of ki_fs : label is "X1Y0";
-	
-	signal ki_vec: std_logic_vector(width - 1 downto 0);
+	signal ki_vec: std_logic_vector(dr_width - 1 downto 0);
 	
 	signal ce, ko_int, valid_p: std_logic;
 	
@@ -42,11 +38,11 @@ architecture Behavioural of ncl2clk is
 	attribute DONT_TOUCH    of ko_mark : label is true;
 begin
 
-	ki_vec <= di_0 or di_1;
+	ki_vec <= dri_0 or dri_1;
 	
 	comp: entity ncl_components.completion_loop
 		generic map (
-			width => width
+			width => dr_width
 		) port map (
 			ko_vector => ki_vec,
 			ko => ki
@@ -55,7 +51,7 @@ begin
 	di: process(clk) begin
 		if rising_edge(clk) then
 			if ki_s = '1' and ki_sp = '1' then
-				do <= di_1;
+				dro <= dri_1;
 			end if;
 		end if;
 	end process di;
@@ -64,7 +60,7 @@ begin
 		port map (
 			S  => rst,
 			C  => clk,
-			CE => '1',
+			CE => ce,
 			
 			D => ki,
 			Q => ki_p
