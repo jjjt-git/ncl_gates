@@ -34,7 +34,7 @@ architecture Behavioural of clk2ncl_fifo_dr is
 	signal d_r, do_0m, do_1m : std_logic_vector(dr_width - 1 downto 0);
 	
 	signal w_ptr, r_ptr : std_logic_vector(1 downto 0);
-	signal sync_meta, sync_stable : std_logic_vector(1 downto 0); -- sync r_ptr + 1
+	signal sync_meta, sync_stable : std_logic_vector(1 downto 0);
 	
 	signal stall_int : std_logic;
 	
@@ -52,7 +52,7 @@ begin
 		'0';
 		
 	full <=
-		'1' when w_ptr = sync_stable else
+		'1' when w_ptr(0) & not w_ptr(1) = sync_stable else
 		'0';
 		
 	stall_int <= full;
@@ -89,10 +89,10 @@ begin
 	sync: process(clk) begin
 		if rising_edge(clk) then
 			if rst = '1' then
-				sync_meta   <= "01";
-				sync_stable <= "01";
+				sync_meta   <= "00";
+				sync_stable <= "00";
 			else
-				sync_meta   <= r_ptr(0) & not r_ptr(1);
+				sync_meta   <= r_ptr;
 				sync_stable <= sync_meta;
 			end if;
 		end if;

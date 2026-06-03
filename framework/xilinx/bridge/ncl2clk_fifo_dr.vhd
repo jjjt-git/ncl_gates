@@ -57,7 +57,7 @@ begin
 		'0';
 		
 	full <=
-		'1' when w_ptr = r_ptr(0) & not r_ptr(1) else
+		'1' when w_ptr(0) & not w_ptr(1) = r_ptr else
 		'0';
 	
 	ko <= ko_int;
