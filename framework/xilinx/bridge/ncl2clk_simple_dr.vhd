@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-library ncl_components;
+library ncl_gates;
 
 entity ncl2clk_simple_dr is
 	generic (
@@ -40,7 +40,7 @@ begin
 
 	ki_vec <= dri_0 or dri_1;
 	
-	comp: entity ncl_components.completion_loop
+	comp: entity ncl_gates.completion_loop
 		generic map (
 			width => dr_width
 		) port map (

@@ -69,7 +69,7 @@ begin
 		end if;
 	end process di;
 
-	mark_d: for ii in 0 to dr_width - 1 generate
+	mark_d: for ii in dri'range generate
 		attribute NCL_WIRE_TYPE of do0_cross : label is "NCL_CLK";
 		attribute DONT_TOUCH    of do0_cross : label is true;
 		

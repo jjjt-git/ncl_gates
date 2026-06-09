@@ -93,9 +93,3 @@ foreach gate $latch_rst_gates {
 }
 
 #write_checkpoint -force /tmp/checkpoint_post_latch_rst.dcp
-
-if {[llength $route_work] != 0} {
-	route_design -delay -pins $route_work
-}
-
-#write_checkpoint -force /tmp/checkpoint_fb_routed.dcp

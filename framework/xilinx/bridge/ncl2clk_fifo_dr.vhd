@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-library ncl_components;
+library ncl_gates;
 
 entity ncl2clk_fifo_dr is
 	generic (
@@ -72,9 +72,10 @@ begin
 			I0 => ko_int
 		);
 	
-	comp: entity ncl_components.completion_loop
+	comp: entity ncl_gates.completion_loop
 		generic map (
-			width => dr_width
+			width => dr_width,
+			negated_out => false
 		) port map (
 			ko_vector => ki_vec,
 			ko => ki
@@ -93,7 +94,7 @@ begin
 	end process sync;
 	
 	di: process(ki) begin
-		if falling_edge(ki) then
+		if rising_edge(ki) then
 			buf(to_integer(unsigned(w_ptr))) <= dri_1;
 		end if;
 	end process di;
@@ -101,7 +102,7 @@ begin
 	handshake_ncl: process(ki, rst) begin
 		if rst = '1' then
 			w_ptr <= (others => '0');
-		elsif falling_edge(ki) then
+		elsif rising_edge(ki) then
 			w_ptr <= w_ptr(0) & not w_ptr(1);
 		end if;
 	end process handshake_ncl;
