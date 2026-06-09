@@ -1,7 +1,6 @@
 
 library IEEE;
 library ncl_gates;
-library ncl_components;
 
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -33,7 +32,7 @@ begin
 		signal next_stage : std_logic_vector(owidth - 1 downto 0);
 	begin
 
-		n: entity ncl_components.completion_loop
+		n: entity ncl_gates.completion_loop
 			generic map (
 				width           => owidth,
 				max_gate_inputs => max_gate_inputs,
