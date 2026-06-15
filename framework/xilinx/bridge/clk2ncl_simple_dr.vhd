@@ -20,14 +20,19 @@ entity clk2ncl_simple_dr is
 end clk2ncl_simple_dr;
 
 architecture Behavioural of clk2ncl_simple_dr is
+	attribute NCL_WIRE_TYPE               : string;
+	attribute NCL_IN_ENC_DATA2VALID_EDGES : string;
+	attribute NCL_IN_ENC_CLK_VALID_PIN    : string;
+	attribute NCL_IN_ENC_DATA_PIN         : string;
+	attribute NCL_IN_ENC_REG              : string;
+	
+	attribute DONT_TOUCH : boolean;
+	attribute ASYNC_REG  : boolean;
+	attribute KEEP       : boolean;
+	attribute HLUTNM     : string;
+	
 	signal do_1m, do_0m, d_r : std_logic_vector(dr_width - 1 downto 0);
 	signal v_r : std_logic;
-	
-	attribute NCL_WIRE_TYPE : string;
-	attribute DONT_TOUCH    : boolean;
-	attribute ASYNC_REG     : boolean;
-	attribute KEEP          : boolean;
-	attribute HLUTNM        : string;
 	
 	signal ki_m, ki_s, ki_sn : std_logic;
 	
@@ -35,6 +40,8 @@ architecture Behavioural of clk2ncl_simple_dr is
 	
 	attribute ASYNC_REG of ki_m : signal is true;
 	attribute ASYNC_REG of ki_s : signal is true;
+	
+	attribute NCL_IN_ENC_REG of v_r : signal is "clk_valid";
 begin
 	stall <= v_r;
 	
@@ -42,36 +49,26 @@ begin
 	dro_1 <= do_1m;
 	
 	ki_edge <= not ki_s and ki_sn;
-
-	mark_d: for ii in 0 to dr_width - 1 generate
-		attribute NCL_WIRE_TYPE of do0_cross : label is "NCL_CLK";
-		attribute DONT_TOUCH    of do0_cross : label is true;
-		
-		attribute NCL_WIRE_TYPE of do1_cross : label is "NCL_CLK";
-		attribute DONT_TOUCH    of do1_cross : label is true;
-	begin
-		do0_cross: LUT1
-			generic map (
-				INIT => "10"
-			) port map (
-				I0 => do_0m(ii)
-			);
-			
-		do1_cross: LUT1
-			generic map (
-				INIT => "10"
-			) port map (
-				I0 => do_1m(ii)
-			);
-	end generate;
 	
 	encode: for ii in 0 to dr_width - 1 generate
 		constant VALID_BITS : bit_vector(7 downto 0) := "10101010";
 		constant DATA_BITS  : bit_vector(7 downto 0) := "11001100";
 		constant KI_BITS    : bit_vector(7 downto 0) := "11110000";
 		
+		attribute DONT_TOUCH of d0 : label is true;
+		attribute DONT_TOUCH of d1 : label is true;
+		
 		attribute NCL_WIRE_TYPE of d0 : label is "IN_ENC";
 		attribute NCL_WIRE_TYPE of d1 : label is "IN_ENC";
+		
+		attribute NCL_IN_ENC_DATA2VALID_EDGES of d0 : label is "fr";
+		attribute NCL_IN_ENC_DATA2VALID_EDGES of d1 : label is "fr";
+		
+		attribute NCL_IN_ENC_CLK_VALID_PIN of d0 : label is "I0";
+		attribute NCL_IN_ENC_CLK_VALID_PIN of d1 : label is "I0";
+		
+		attribute NCL_IN_ENC_DATA_PIN of d0 : label is "I1";
+		attribute NCL_IN_ENC_DATA_PIN of d1 : label is "I1";
 		
 		attribute HLUTNM of d0 : label is "enc" & integer'image(ii);
 		attribute HLUTNM of d1 : label is "enc" & integer'image(ii);

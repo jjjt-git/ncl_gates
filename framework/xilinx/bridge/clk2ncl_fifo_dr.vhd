@@ -21,10 +21,16 @@ entity clk2ncl_fifo_dr is
 end clk2ncl_fifo_dr;
 
 architecture Behavioural of clk2ncl_fifo_dr is
-	attribute NCL_WIRE_TYPE : string;
-	attribute HLUTNM        : string;
-	attribute DONT_TOUCH    : boolean;
-	attribute ASYNC_REG     : boolean;
+	attribute NCL_WIRE_TYPE               : string;
+	attribute NCL_IN_ENC_DATA2VALID_EDGES : string;
+	attribute NCL_IN_ENC_CLK_VALID_PIN    : string;
+	attribute NCL_IN_ENC_DATA_PIN         : string;
+	attribute NCL_IN_ENC_REG              : string;
+	
+	attribute DONT_TOUCH : boolean;
+	attribute ASYNC_REG  : boolean;
+	attribute KEEP       : boolean;
+	attribute HLUTNM     : string;
 	
 	signal empty, full : std_logic;
 	
@@ -36,10 +42,14 @@ architecture Behavioural of clk2ncl_fifo_dr is
 	signal w_ptr, r_ptr : std_logic_vector(1 downto 0);
 	signal sync_meta, sync_stable : std_logic_vector(1 downto 0);
 	
-	signal stall_int : std_logic;
+	signal stall_int, ki_clk : std_logic;
 	
 	attribute ASYNC_REG of sync_meta   : signal is true;
 	attribute ASYNC_REG of sync_stable : signal is true;
+	
+	attribute NCL_WIRE_TYPE of ki_buf : label is "COMP_CLK_CLK2NCL";
+	
+	attribute NCL_IN_ENC_REG of w_ptr : signal is "clk_valid";
 begin
 
 	dro_0 <= do_0m;
@@ -60,13 +70,18 @@ begin
 	d_r <= buf(to_integer(unsigned(r_ptr)));
 		 
 	di: process(clk) begin
-		if rising_edge(clk) then
+		if falling_edge(clk) then
 			if valid = '1' and stall_int = '0' then
 				buf(to_integer(unsigned(w_ptr))) <= dri;
 			end if;
 		end if;
 	end process di;
 	
+	ki_buf: BUFH
+		port map (
+			I => ki,
+			O => ki_clk
+		);
 	
 	handshake_clk: process(clk) begin
 		if rising_edge(clk) then
@@ -78,10 +93,10 @@ begin
 		end if;
 	end process handshake_clk;
 	
-	handshake_ncl: process(ki, rst) begin
+	handshake_ncl: process(ki_clk, rst) begin
 		if rst = '1' then
 			r_ptr <= (others => '0');
-		elsif falling_edge(ki) then
+		elsif falling_edge(ki_clk) then
 			r_ptr <= r_ptr(0) & not r_ptr(1);
 		end if;
 	end process handshake_ncl;
@@ -103,8 +118,20 @@ begin
 		constant DATA_BITS  : bit_vector(7 downto 0) := "11001100";
 		constant KI_BITS    : bit_vector(7 downto 0) := "11110000";
 		
+		attribute DONT_TOUCH of d0 : label is true;
+		attribute DONT_TOUCH of d1 : label is true;
+		
 		attribute NCL_WIRE_TYPE of d0 : label is "IN_ENC";
 		attribute NCL_WIRE_TYPE of d1 : label is "IN_ENC";
+		
+		attribute NCL_IN_ENC_DATA2VALID_EDGES of d0 : label is "fr";
+		attribute NCL_IN_ENC_DATA2VALID_EDGES of d1 : label is "fr";
+		
+		attribute NCL_IN_ENC_CLK_VALID_PIN of d0 : label is "I0";
+		attribute NCL_IN_ENC_CLK_VALID_PIN of d1 : label is "I0";
+		
+		attribute NCL_IN_ENC_DATA_PIN of d0 : label is "I1";
+		attribute NCL_IN_ENC_DATA_PIN of d1 : label is "I1";
 		
 		attribute HLUTNM of d0 : label is "enc" & integer'image(ii);
 		attribute HLUTNM of d1 : label is "enc" & integer'image(ii);
@@ -131,27 +158,5 @@ begin
 				O => do_1m(ii)
 			);
 	end generate encode;
-
-	mark_d: for ii in 0 to dr_width - 1 generate
-		attribute NCL_WIRE_TYPE of do0_cross : label is "NCL_CLK";
-		attribute DONT_TOUCH    of do0_cross : label is true;
-		
-		attribute NCL_WIRE_TYPE of do1_cross : label is "NCL_CLK";
-		attribute DONT_TOUCH    of do1_cross : label is true;
-	begin
-		do0_cross: LUT1
-			generic map (
-				INIT => "10"
-			) port map (
-				I0 => do_0m(ii)
-			);
-			
-		do1_cross: LUT1
-			generic map (
-				INIT => "10"
-			) port map (
-				I0 => do_1m(ii)
-			);
-	end generate;
 	
 end Behavioural;

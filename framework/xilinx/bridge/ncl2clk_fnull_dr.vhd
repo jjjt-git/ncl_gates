@@ -36,7 +36,7 @@ architecture Behavioural of ncl2clk_fnull_dr is
 	attribute NCL_WIRE_TYPE of ko_mark : label is "NCL_CLK";
 	attribute DONT_TOUCH    of ko_mark : label is true;
 	
-	attribute NCL_WIRE_TYPE of ki_buf : label is "COMP_CLK";
+	attribute NCL_WIRE_TYPE of ki_buf  : label is "COMP_CLK_NCL2CLK";
 	
 	attribute NCL_WIRE_TYPE of dro     : signal is "COMP_DI_REG";
 	
@@ -49,7 +49,7 @@ begin
 	valid_int <= sync_stable xor read;
 	valid <= valid_int;
 	
-	ko_int <= not (written xor read) and ki;
+	ko_int <= not (written xor read) and not ki; -- ki is internally inverted
 	ko <= ko_int;
 	
 	ko_mark: LUT1

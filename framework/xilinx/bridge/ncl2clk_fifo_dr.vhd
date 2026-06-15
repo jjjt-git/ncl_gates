@@ -24,11 +24,12 @@ end ncl2clk_fifo_dr;
 architecture Behavioural of ncl2clk_fifo_dr is
 	attribute NCL_WIRE_TYPE : string;
 	attribute DONT_TOUCH    : boolean;
+	attribute KEEP          : boolean;
 	attribute ASYNC_REG     : boolean;
 	
-	signal ki_vec : std_logic_vector(dr_width - 1 downto 0);
+	signal ki_vec, do : std_logic_vector(dr_width - 1 downto 0);
 	
-	signal ki, ko_int : std_logic;
+	signal ki, ki_clk, ko_int : std_logic;
 	
 	signal empty, full : std_logic;
 	
@@ -42,6 +43,8 @@ architecture Behavioural of ncl2clk_fifo_dr is
 	
 	attribute NCL_WIRE_TYPE of ko_mark : label is "NCL_CLK";
 	attribute DONT_TOUCH    of ko_mark : label is true;
+	
+	attribute NCL_WIRE_TYPE of ki_buf  : label is "COMP_CLK_NCL2CLK";
 	
 	attribute ASYNC_REG of sync_meta   : signal is true;
 	attribute ASYNC_REG of sync_stable : signal is true;
@@ -61,9 +64,10 @@ begin
 		'0';
 	
 	ko <= ko_int;
-	ko_int <= not full and ki;
+	ko_int <= not full and not ki; -- ki is internally inverted
 	
-	dro <= buf(to_integer(unsigned(r_ptr)));
+	do  <= buf(to_integer(unsigned(r_ptr)));
+	dro <= do;
 	
 	ko_mark: LUT1
 		generic map (
@@ -71,6 +75,33 @@ begin
 		) port map (
 			I0 => ko_int
 		);
+	
+	ki_buf: BUFH
+		port map (
+			I => ki,
+			O => ki_clk
+		);
+	
+	mark_ki_vec: for ii in ki_vec'range generate
+		attribute NCL_WIRE_TYPE of do_mark    : label is "COMP_DI_REG";
+		attribute DONT_TOUCH    of do_mark    : label is true;
+		attribute NCL_WIRE_TYPE of kivec_mark : label is "COMP_KI_VEC";
+		attribute DONT_TOUCH    of kivec_mark : label is true;
+	begin
+		kivec_mark: LUT1
+			generic map (
+				INIT => "10"
+			) port map (
+				I0 => ki_vec(ii)
+			);
+			
+		do_mark: LUT1
+			generic map (
+				INIT => "10"
+			) port map (
+				I0 => do(ii)
+			);
+	end generate mark_ki_vec;	
 	
 	comp: entity ncl_gates.completion_loop
 		generic map (
@@ -93,16 +124,16 @@ begin
 		end if;
 	end process sync;
 	
-	di: process(ki) begin
-		if rising_edge(ki) then
+	di: process(ki_clk) begin
+		if rising_edge(ki_clk) then
 			buf(to_integer(unsigned(w_ptr))) <= dri_1;
 		end if;
 	end process di;
 	
-	handshake_ncl: process(ki, rst) begin
+	handshake_ncl: process(ki_clk, rst) begin
 		if rst = '1' then
 			w_ptr <= (others => '0');
-		elsif rising_edge(ki) then
+		elsif rising_edge(ki_clk) then
 			w_ptr <= w_ptr(0) & not w_ptr(1);
 		end if;
 	end process handshake_ncl;
