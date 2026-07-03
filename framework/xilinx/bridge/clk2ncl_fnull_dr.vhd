@@ -53,10 +53,12 @@ begin
 	
 	stall_int <= written xor sync_stable;
 	
-	ki_buf: BUFH
-		port map (
-			I => ki,
-			O => ki_clk
+	ki_buf: LUT1
+		generic map (
+			INIT => "10"
+		) port map (
+			I0 => ki,
+			O  => ki_clk
 		);
 	
 	handshake_ncl: process(ki_clk, rst) begin

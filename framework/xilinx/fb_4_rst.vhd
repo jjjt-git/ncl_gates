@@ -16,6 +16,9 @@ entity fb_4_rst is
 end fb_4_rst;
 
 architecture Structural of fb_4_rst is
+	attribute DONT_TOUCH                    : boolean;
+	attribute DONT_TOUCH of NCL_GATE_SIMPLE : label is true;
+	
 	constant FB_VALUE     : bit_vector(31 downto 0) := x"FFFF_0000"; -- I4 is FB
 	constant CLEAR_F_SET  : bit_vector(31 downto 0) := CLEAR_SET(15 downto 0) & CLEAR_SET(15 downto 0);
 	constant ASSERT_F_SET : bit_vector(31 downto 0) := ASSERT_SET(15 downto 0) & ASSERT_SET(15 downto 0);

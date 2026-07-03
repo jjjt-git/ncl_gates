@@ -16,6 +16,9 @@ entity fb_5_rst is
 end fb_5_rst;
 
 architecture Structural of fb_5_rst is
+	attribute DONT_TOUCH                    : boolean;
+	attribute DONT_TOUCH of NCL_GATE_EXTRST : label is true;
+	
 	constant FB_VALUE     : bit_vector(63 downto 0) := x"FFFF_FFFF_0000_0000"; -- I5 is FB
 	constant CLEAR_F_SET  : bit_vector(63 downto 0) := CLEAR_SET & CLEAR_SET;
 	constant ASSERT_F_SET : bit_vector(63 downto 0) := ASSERT_SET & ASSERT_SET;
@@ -44,7 +47,8 @@ begin
 		);
 	
 	RST_N: if RST_VALUE = '0' generate
-		attribute RLOC of NCL_EXTRST : label is "X0Y0";
+		attribute RLOC of NCL_EXTRST       : label is "X0Y0";
+		attribute DONT_TOUCH of NCL_EXTRST : label is true;
 	begin
 		NCL_EXTRST: LDCE
 			generic map (
@@ -61,7 +65,8 @@ begin
 	end generate;
 
 	RST_D: if RST_VALUE = '1' generate
-		attribute RLOC of NCL_EXTRST : label is "X0Y0";
+		attribute RLOC of NCL_EXTRST       : label is "X0Y0";
+		attribute DONT_TOUCH of NCL_EXTRST : label is true;
 	begin
 		NCL_EXTRST: LDPE
 			generic map (

@@ -26,49 +26,49 @@ architecture Behavioural of clk2ncl_fifo_dr is
 	attribute NCL_IN_ENC_CLK_VALID_PIN    : string;
 	attribute NCL_IN_ENC_DATA_PIN         : string;
 	attribute NCL_IN_ENC_REG              : string;
-	
+
 	attribute DONT_TOUCH : boolean;
 	attribute ASYNC_REG  : boolean;
 	attribute KEEP       : boolean;
 	attribute HLUTNM     : string;
-	
+
 	signal empty, full : std_logic;
-	
+
 	type buf_t is array (0 to 3) of std_logic_vector(dr_width - 1 downto 0);
 	signal buf : buf_t;
-	
+
 	signal d_r, do_0m, do_1m : std_logic_vector(dr_width - 1 downto 0);
-	
+
 	signal w_ptr, r_ptr : std_logic_vector(1 downto 0);
 	signal sync_meta, sync_stable : std_logic_vector(1 downto 0);
-	
+
 	signal stall_int, ki_clk : std_logic;
-	
+
 	attribute ASYNC_REG of sync_meta   : signal is true;
 	attribute ASYNC_REG of sync_stable : signal is true;
-	
+
 	attribute NCL_WIRE_TYPE of ki_buf : label is "COMP_CLK_CLK2NCL";
-	
+
 	attribute NCL_IN_ENC_REG of w_ptr : signal is "clk_valid";
 begin
 
 	dro_0 <= do_0m;
 	dro_1 <= do_1m;
-	
+
 	stall <= stall_int;
-	
+
 	empty <=
 		'1' when w_ptr = r_ptr else
 		'0';
-		
+
 	full <=
 		'1' when w_ptr(0) & not w_ptr(1) = sync_stable else
 		'0';
-		
+
 	stall_int <= full;
-	
+
 	d_r <= buf(to_integer(unsigned(r_ptr)));
-		 
+
 	di: process(clk) begin
 		if falling_edge(clk) then
 			if valid = '1' and stall_int = '0' then
@@ -76,13 +76,15 @@ begin
 			end if;
 		end if;
 	end process di;
-	
-	ki_buf: BUFH
-		port map (
-			I => ki,
-			O => ki_clk
+
+	ki_buf: LUT1
+		generic map (
+			INIT => "10"
+		) port map (
+			I0 => ki,
+			O  => ki_clk
 		);
-	
+
 	handshake_clk: process(clk) begin
 		if rising_edge(clk) then
 			if rst = '1' then
@@ -92,7 +94,7 @@ begin
 			end if;
 		end if;
 	end process handshake_clk;
-	
+
 	handshake_ncl: process(ki_clk, rst) begin
 		if rst = '1' then
 			r_ptr <= (others => '0');
@@ -117,22 +119,22 @@ begin
 		constant EMPTY_BITS : bit_vector(7 downto 0) := "10101010";
 		constant DATA_BITS  : bit_vector(7 downto 0) := "11001100";
 		constant KI_BITS    : bit_vector(7 downto 0) := "11110000";
-		
+
 		attribute DONT_TOUCH of d0 : label is true;
 		attribute DONT_TOUCH of d1 : label is true;
-		
+
 		attribute NCL_WIRE_TYPE of d0 : label is "IN_ENC";
 		attribute NCL_WIRE_TYPE of d1 : label is "IN_ENC";
-		
+
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d0 : label is "fr";
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d1 : label is "fr";
-		
+
 		attribute NCL_IN_ENC_CLK_VALID_PIN of d0 : label is "I0";
 		attribute NCL_IN_ENC_CLK_VALID_PIN of d1 : label is "I0";
-		
+
 		attribute NCL_IN_ENC_DATA_PIN of d0 : label is "I1";
 		attribute NCL_IN_ENC_DATA_PIN of d1 : label is "I1";
-		
+
 		attribute HLUTNM of d0 : label is "enc" & integer'image(ii);
 		attribute HLUTNM of d1 : label is "enc" & integer'image(ii);
 	begin
@@ -143,10 +145,10 @@ begin
 				I0 => empty,
 				I1 => d_r(ii),
 				I2 => ki,
-				
+
 				O => do_0m(ii)
 			);
-		
+
 		d1: LUT3
 			generic map (
 				INIT => not EMPTY_BITS and KI_BITS and DATA_BITS
@@ -154,9 +156,9 @@ begin
 				I0 => empty,
 				I1 => d_r(ii),
 				I2 => ki,
-				
+
 				O => do_1m(ii)
 			);
 	end generate encode;
-	
+
 end Behavioural;

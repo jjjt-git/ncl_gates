@@ -15,6 +15,9 @@ entity fb_2 is
 end fb_2;
 
 architecture Structural of fb_2 is
+	attribute DONT_TOUCH                    : boolean;
+	attribute DONT_TOUCH of NCL_GATE_SIMPLE : label is true;
+	
 	constant FB_VALUE     : bit_vector(7 downto 0) := x"F0"; -- I2 is FB
 	constant CLEAR_F_SET  : bit_vector(7 downto 0) := CLEAR_SET(3 downto 0) & CLEAR_SET(3 downto 0);
 	constant ASSERT_F_SET : bit_vector(7 downto 0) := ASSERT_SET(3 downto 0) & ASSERT_SET(3 downto 0);
