@@ -1,11 +1,14 @@
 write_checkpoint -force /tmp/checkpoint.dcp
 
-# begin finite set helper functions as per https://wiki.tcl-lang.org/page/Manipulating+sets+in+Tcl
+# constants
+
+set fb_required_delay 2.0
+set slice_lutnum      4
+
+# finite set helper functions as per https://wiki.tcl-lang.org/page/Manipulating+sets+in+Tcl
 proc set_add {seta elem} {
-	upvar $seta list
-	
-	if {[lsearch -exact $list $elem] == -1} {
-		lappend list $elem
+	if {[lsearch -exact $seta $elem] == -1} {
+		lappend seta $elem
 	}
 }
 
@@ -15,7 +18,7 @@ proc set_contains {seta elem} {
 
 proc set_union {seta setb} {
 	set result $seta
-	
+
 	foreach elem $setb {
 		if {[lsearch -exact $seta $elem] == -1} {
 			lappend result $elem
@@ -26,7 +29,7 @@ proc set_union {seta setb} {
 
 proc set_intersection {seta setb} {
 	set result {}
-	
+
 	foreach elem $setb {
 		if {[lsearch -exact $seta $elem] != -1} {
 			lappend result $elem
@@ -37,7 +40,7 @@ proc set_intersection {seta setb} {
 
 proc set_exclusion {seta setb} {
 	set result {}
-	
+
 	foreach elem $setb {
 		if {[lsearch -exact $seta $elem] == -1} {
 			lappend result $elem
@@ -51,6 +54,7 @@ proc set_size {seta} {
 }
 # end finite set helper functions
 
+# find all timing objects
 set ack [get_cells -leaf -filter "NCL_WIRE_TYPE == ACK"]
 set bridge [get_cells -leaf -filter "NCL_WIRE_TYPE == NCL_CLK"]
 
@@ -64,8 +68,7 @@ set comp_clk_CLK2NCL [get_cells -leaf -filter "NCL_WIRE_TYPE == COMP_CLK_CLK2NCL
 
 set markers []
 
-set fb_required_delay 2.0
-
+# timing constraints
 foreach cc $bridge {
 	# find appropriate pins
 	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == IN"]
@@ -135,9 +138,9 @@ foreach cc $comp_clk_CLK2NCL {
 	create_clock -period [expr $fb_required_delay * 2] $ki_clk
 
 	set cdc_sync [get_cells -filter "ASYNC_REG && PARENT == $bridge" -leaf]
-	
+
 	set_min_delay -from $ki_src -to [get_pins -filter "DIRECTION == IN" -of $cc] $fb_required_delay
-	
+
 	group_path -name "KI_CLK_FORCE_SKEW" -from $ki_src -to [get_pins -filter "DIRECTION == IN" -of $cc]
 
 	set_false_path -from [get_clocks -of $ki_clk] -to $cdc_sync
@@ -229,15 +232,15 @@ foreach cc $inbridge_enc {
 
 		group_path -name "NCL_IN_ENC_CLK_DAT" -from $d_src -to $dat_pin
 	}
-	
+
 	if {[llength $ki_pin] != 0} {
 		set ki_src [get_pins -of [get_nets -segments -of $ki_pin] -filter "DIRECTION == OUT && IS_LEAF"]
-		
+
 		set_max_delay -from $ki_src -to $ki_pin $fb_required_delay
-		
+
 		group_path -name "NCL_IN_ENC_KI" -from $ki_src -to $ki_pin
 	}
-	
+
 	set_false_path -through $opin
 }
 
@@ -262,6 +265,147 @@ foreach cc $ack {
 	# remove marker
 	lappend markers $cc
 }
+# end timing constraints
+
+# find all isofork objects
+
+set isoforks [get_cells -hierarchical QDI_ISOFORK]
+
+# isofork constraints
+set isofork_id 0
+create_property -type string QDI_ISOFORK_GRPS  pin
+create_property -type bool   QDI_ISOFORK_COLOC cell
+
+set_property DONT_TOUCH false $isoforks
+
+set isofork_lut []
+
+# initial marking
+foreach cc $isoforks {
+	set trgs [get_pins -filter "IS_LEAF && DIRECTION == IN" -of [get_nets -segments -of [get_pins -filter "REF_PIN_NAME == O" -of $cc]]]
+
+	foreach tt $trgs {
+		set grp [get_property QDI_ISOFORK_GRPS $tt]
+		set grp [set_add $grp $isofork_id]
+		set_property QDI_ISOFORK_GRPS  $grp  $tt
+	}
+	
+	set_property QDI_ISOFORK_COLOC false [get_cells -of $trgs]
+
+	lappend isofork_lut [get_cells -of $trgs]
+
+	incr isofork_id
+}
+
+# merge groups
+while 1 {
+	set fin true
+	for {set ii 0} {$ii < $isofork_id} {incr ii} {
+		for {set jj [expr $ii + 1]} {$jj < $isofork_id} {incr jj} {
+			set prim [lindex $isofork_lut $ii]
+			set sec  [lindex $isofork_lut $jj]
+
+			if {[set_size [set_intersection $prim $sec]] != 0} { # merge
+				lset isofork_lut $ii [set_union $prim $sec]
+				lset isofork_lut $jj {}
+				set fin false
+			}
+		}
+	}
+	if {$fin} break
+}
+
+# cluster groups
+foreach isoset $isofork_lut {
+	if {[llength $isoset] == 0} continue
+	# sort after input number asc
+	set l6 {}
+	set l5 {}
+	set l4 {}
+	set l3 {}
+	set l2 {}
+	set l1 {}
+	foreach id $isoset {
+		set cc [get_cells $id]
+		switch [get_property REF_NAME $cc] {
+			LUT6 {
+				lappend l6 $id
+			}
+			LUT5 {
+				lappend l5 $id
+			}
+			LUT4 {
+				lappend l4 $id
+			}
+			LUT3 {
+				lappend l3 $id
+			}
+			LUT2 {
+				lappend l2 $id
+			}
+			default {
+				lappend l1 $id
+			}
+		}
+	}
+	set isoset [concat $l6 $l5 $l4 $l3 $l2 $l1]
+
+	# co-locate cells
+	for {set ii 0} {$ii < [llength $isoset]} {incr ii} {
+		set id [lindex $isoset $ii]
+		set cur [get_cells $id]
+		if {[get_property HLUTNM $cur] != ""} continue
+		set cur_pins [get_pins -filter "DIRECTION == OUT && IS_LEAF" -of [get_nets -segments -of [get_pins -filter "DIRECTION == IN" -of $cur]]]
+
+		set score 0
+		set selected {}
+		for {set jj [expr $ii + 1]} {$jj < [llength $isoset]} {incr jj} {
+			set cand [get_cells [lindex $isoset $jj]]
+			if {[get_property HLUTNM $cand] != ""} continue
+			set cand_pins [get_pins -filter "DIRECTION == OUT && IS_LEAF" -of [get_nets -segments -of [get_pins -filter "DIRECTION == IN" -of $cand]]]
+
+			if {[set_size [set_union [get_cells -of $cur_pins] [get_cells -of $cand_pins]]] > 5} continue
+			set l_score [set_size [set_intersection [get_cells -of $cur_pins] [get_cells -of $cand_pins]]]]
+
+			if {$score > $l_score} continue
+
+			set score $l_score
+			set selected $cand
+		}
+		if {$score == 0} continue
+
+		set_property LUTNM $id $cur
+		set_property LUTNM $id $selected
+
+		set_property QDI_ISOFORK_COLOC true $selected
+	}
+
+	# cluster cells
+	set slice 0
+	set slice_ctr 0
+	set id [lindex $isoset 0]
+	set rlocs {}
+
+	foreach cc $isoset {
+		set cc [get_cells $cc]
+		if {[get_property QDI_ISOFORK_COLOC $cc]} continue
+
+		lappend rlocs [get_property NAME $cc]
+		lappend rlocs "X${slice}Y0"
+
+		incr slice_ctr
+		if {$slice_ctr == $slice_lutnum} {
+			set slice_ctr 0
+			incr slice
+		}
+	}
+
+	if {$slice_ctr == 1 && $slice == 0} continue
+
+	create_macro $id
+	update_macro $id $rlocs
+}
+# end isofork constraints
 
 set_property DONT_TOUCH false $markers
 remove_cell $markers
