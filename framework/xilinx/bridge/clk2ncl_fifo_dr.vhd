@@ -23,8 +23,9 @@ end clk2ncl_fifo_dr;
 architecture Behavioural of clk2ncl_fifo_dr is
 	attribute NCL_WIRE_TYPE               : string;
 	attribute NCL_IN_ENC_DATA2VALID_EDGES : string;
-	attribute NCL_IN_ENC_CLK_VALID_PIN    : string;
+	attribute NCL_IN_ENC_VALID_PIN        : string;
 	attribute NCL_IN_ENC_DATA_PIN         : string;
+	attribute NCL_IN_ENC_KI_PIN           : string;
 	attribute NCL_IN_ENC_REG              : string;
 
 	attribute DONT_TOUCH : boolean;
@@ -129,11 +130,14 @@ begin
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d0 : label is "fr";
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d1 : label is "fr";
 
-		attribute NCL_IN_ENC_CLK_VALID_PIN of d0 : label is "I0";
-		attribute NCL_IN_ENC_CLK_VALID_PIN of d1 : label is "I0";
+		attribute NCL_IN_ENC_VALID_PIN of d0 : label is "I0";
+		attribute NCL_IN_ENC_VALID_PIN of d1 : label is "I0";
 
 		attribute NCL_IN_ENC_DATA_PIN of d0 : label is "I1";
 		attribute NCL_IN_ENC_DATA_PIN of d1 : label is "I1";
+
+		attribute NCL_IN_ENC_KI_PIN of d0 : label is "I2";
+		attribute NCL_IN_ENC_KI_PIN of d1 : label is "I2";
 
 		attribute HLUTNM of d0 : label is "enc" & integer'image(ii);
 		attribute HLUTNM of d1 : label is "enc" & integer'image(ii);

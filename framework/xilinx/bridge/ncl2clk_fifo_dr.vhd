@@ -105,8 +105,9 @@ begin
 	
 	comp: entity ncl_gates.completion_loop
 		generic map (
-			width => dr_width,
-			negated_out => false
+			width       => dr_width,
+			negated_out => false,
+			mark_ko     => false
 		) port map (
 			ko_vector => ki_vec,
 			ko => ki

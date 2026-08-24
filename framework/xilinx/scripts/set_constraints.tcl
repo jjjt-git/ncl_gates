@@ -1,4 +1,55 @@
-#write_checkpoint -force /tmp/checkpoint.dcp
+write_checkpoint -force /tmp/checkpoint.dcp
+
+# begin finite set helper functions as per https://wiki.tcl-lang.org/page/Manipulating+sets+in+Tcl
+proc set_add {seta elem} {
+	upvar $seta list
+	
+	if {[lsearch -exact $list $elem] == -1} {
+		lappend list $elem
+	}
+}
+
+proc set_contains {seta elem} {
+	return [expr [lsearch $seta $elem] >= 0]
+}
+
+proc set_union {seta setb} {
+	set result $seta
+	
+	foreach elem $setb {
+		if {[lsearch -exact $seta $elem] == -1} {
+			lappend result $elem
+		}
+	}
+	return $result
+}
+
+proc set_intersection {seta setb} {
+	set result {}
+	
+	foreach elem $setb {
+		if {[lsearch -exact $seta $elem] != -1} {
+			lappend result $elem
+		}
+	}
+	return $result
+}
+
+proc set_exclusion {seta setb} {
+	set result {}
+	
+	foreach elem $setb {
+		if {[lsearch -exact $seta $elem] == -1} {
+			lappend result $elem
+		}
+	}
+	return $result
+}
+
+proc set_size {seta} {
+	return [llength $seta]
+}
+# end finite set helper functions
 
 set ack [get_cells -leaf -filter "NCL_WIRE_TYPE == ACK"]
 set bridge [get_cells -leaf -filter "NCL_WIRE_TYPE == NCL_CLK"]
@@ -15,35 +66,13 @@ set markers []
 
 set fb_required_delay 2.0
 
-foreach cc $ack {
-	# find appropriate pins
-	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == IN"]
-	set net  [get_nets -segments -of $mark]
-
-	set ack_src [get_pins -of $net -filter "IS_LEAF && DIRECTION == OUT"]
-
-	set pc [get_cells -of $ack_src]
-	set pfb [get_pins -of [get_nets -of $ack_src] -filter "DIRECTION == IN"]
-
-	set ack_snk [get_pins -of $pc -filter "NAME != $pfb && DIRECTION == IN"]
-
-	# add constraints
-
-	set_min_delay $fb_required_delay -from $ack_src -to $ack_snk
-
-	group_path -name "NCL_ACK_FB" -from $ack_src -to $ack_snk
-
-	# remove marker
-	lappend markers $cc
-}
-
 foreach cc $bridge {
 	# find appropriate pins
 	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == IN"]
 	set net  [get_nets -of $mark]
 
 	if {[llength $net]} {
-		set_false_path -setup -hold -rise -fall -through $net
+		set_false_path -through $net
 	}
 
 	# remove marker
@@ -81,7 +110,7 @@ foreach cc $comp_clk_NCL2CLK {
 	}
 
 	set_min_delay $fb_required_delay -from $src_pins -to $ki_pin
-	set_max_delay [expr $fb_required_delay - 0.5] -from $src_pins -to $di_trg
+	set_max_delay [expr $fb_required_delay - 1] -from $src_pins -to $di_trg
 
 	group_path -name "NCL_BRIDGE_KI_CLK" -from $src_pins
 
@@ -101,10 +130,15 @@ foreach cc $comp_clk_CLK2NCL {
 	set bridge [get_property PARENT $cc]
 
 	set ki_clk [get_nets -of [get_pins -filter "DIRECTION == OUT" -of $cc]]
+	set ki_src [get_pins -of [get_nets -segments -of [get_pins -filter "DIRECTION == IN" -of $cc]] -filter "DIRECTION == OUT"]
 
 	create_clock -period [expr $fb_required_delay * 2] $ki_clk
 
 	set cdc_sync [get_cells -filter "ASYNC_REG && PARENT == $bridge" -leaf]
+	
+	set_min_delay -from $ki_src -to [get_pins -filter "DIRECTION == IN" -of $cc] $fb_required_delay
+	
+	group_path -name "KI_CLK_FORCE_SKEW" -from $ki_src -to [get_pins -filter "DIRECTION == IN" -of $cc]
 
 	set_false_path -from [get_clocks -of $ki_clk] -to $cdc_sync
 }
@@ -158,15 +192,16 @@ foreach clk [get_clocks] {
 foreach cc $inbridge_enc {
 	set bridge [get_property PARENT $cc]
 
-	set clk_val_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_CLK_VALID_PIN $cc]"]
-	set clk_dat_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_DATA_PIN $cc]"]
+	set val_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_VALID_PIN $cc]"]
+	set dat_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_DATA_PIN $cc]"]
+	set ki_pin  [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_KI_PIN $cc]"]
 
 	set edge_conf [get_property NCL_IN_ENC_DATA2VALID_EDGES $cc]
 
 	set opin [get_pins -filter "DIRECTION == OUT" -of $cc]
 
 	set d_src []
-	set d_src_wlist [get_cells -of [get_pins -of [get_nets -segments -of $clk_dat_pin] -filter "IS_LEAF && DIRECTION == OUT"]]
+	set d_src_wlist [get_cells -of [get_pins -of [get_nets -segments -of $dat_pin] -filter "IS_LEAF && DIRECTION == OUT"]]
 	while {[llength $d_src_wlist] != 0} {
 		set mm [lindex $d_src_wlist 0]
 		set d_src_wlist [lreplace $d_src_wlist 0 0]
@@ -190,10 +225,42 @@ foreach cc $inbridge_enc {
 
 		set Treq $clock_desc($edge_conf,$clk_name)
 
-		set_max_delay -datapath_only -from $d_src -to $clk_dat_pin $Treq
+		set_max_delay -datapath_only -from $d_src -to $dat_pin $Treq
 
-		group_path -name "NCL_IN_ENC" -to $clk_dat_pin
+		group_path -name "NCL_IN_ENC_CLK_DAT" -from $d_src -to $dat_pin
 	}
+	
+	if {[llength $ki_pin] != 0} {
+		set ki_src [get_pins -of [get_nets -segments -of $ki_pin] -filter "DIRECTION == OUT && IS_LEAF"]
+		
+		set_max_delay -from $ki_src -to $ki_pin $fb_required_delay
+		
+		group_path -name "NCL_IN_ENC_KI" -from $ki_src -to $ki_pin
+	}
+	
+	set_false_path -through $opin
+}
+
+foreach cc $ack {
+	# find appropriate pins
+	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == IN"]
+	set net  [get_nets -segments -of $mark]
+
+	set ack_src [get_pins -of $net -filter "IS_LEAF && DIRECTION == OUT"]
+
+	set pc [get_cells -of $ack_src]
+	set pfb [get_pins -of [get_nets -of $ack_src] -filter "DIRECTION == IN"]
+
+	set ack_snk [get_pins -of $pc -filter "NAME != $pfb && DIRECTION == IN"]
+
+	# add constraints
+
+	set_min_delay $fb_required_delay -from $ack_src -to $ack_snk
+
+	group_path -name "NCL_ACK_FB" -from $ack_src -to $ack_snk
+
+	# remove marker
+	lappend markers $cc
 }
 
 set_property DONT_TOUCH false $markers
