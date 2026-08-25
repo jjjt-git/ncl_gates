@@ -10,4 +10,3 @@ set_property STEPS.PLACE_DESIGN.TCL.POST [ get_files $dir/set_hardmask.tcl -of [
 
 # enable optional phases required for hitting some constraints
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
-
