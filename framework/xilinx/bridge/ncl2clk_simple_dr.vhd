@@ -90,11 +90,11 @@ begin
 		generic map (
 			INIT => "10"
 		) port map (
-			I0 => ko_int
+			I0 => ko_int,
+			O  => ko
 		);
 	
 	ko_int <= ki_s and ki_sp;
-	ko <= ko_int;
 	
 	ce <= not valid_p or not stall;
 	

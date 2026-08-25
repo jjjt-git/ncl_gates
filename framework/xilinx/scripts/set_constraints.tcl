@@ -1,5 +1,13 @@
 write_checkpoint -force /tmp/checkpoint.dcp
 
+# manage DRCs to improve readability
+
+create_waiver -type DRC -id {LUTLP-2} -user {Jacob Tilger} -desc {NCL gates require the feedback paths} -objects [get_cells -hierarchical NCL_GATE*] -tags QDI
+
+create_waiver -type METHODOLOGY -id {TIMING-23} -user {Jacob Tilger} -desc {NCL gates require the feedback paths} -objects [get_pins -hierarchical NCL_GATE*/*] -tags QDI
+create_waiver -type METHODOLOGY -id {TIMING-13} -user {Jacob Tilger} -desc {Bridges and ACK require hard timed paths} -objects [get_pins -hierarchical NCL_GATE*/*] -tags QDI
+create_waiver -type METHODOLOGY -id {TIMING-13} -user {Jacob Tilger} -desc {Bridges and ACK require hard timed paths} -objects [get_pins -filter "DIRECTION == IN" -of [get_cells -leaf -filter "NCL_WIRE_TYPE == IN_ENC"]] -tags QDI
+
 # constants
 
 set fb_required_delay 2.0
@@ -66,21 +74,19 @@ set comp_clk_NCL2CLK [get_cells -leaf -filter "NCL_WIRE_TYPE == COMP_CLK_NCL2CLK
 
 set comp_clk_CLK2NCL [get_cells -leaf -filter "NCL_WIRE_TYPE == COMP_CLK_CLK2NCL"]
 
-set markers []
+set markers {}
 
 # timing constraints
 foreach cc $bridge {
 	# find appropriate pins
-	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == IN"]
+	set mark [get_pins -of [get_cells $cc] -filter "DIRECTION == OUT"]
 	set net  [get_nets -of $mark]
 
 	if {[llength $net]} {
-		set_false_path -through $net
+		set_false_path -through [get_pins -of $net -filter "!IS_LEAF"]
 	}
-
-	# remove marker
-	lappend markers $cc
 }
+set_property DONT_TOUCH false $bridge
 
 foreach cc $comp_clk_NCL2CLK {
 	set bridge [get_property PARENT $cc]
@@ -122,6 +128,7 @@ foreach cc $comp_clk_NCL2CLK {
 	set cdc_sync [get_cells -filter "ASYNC_REG && PARENT == $bridge" -leaf]
 
 	set_false_path -from [get_clocks -of $ki_clk] -to $cdc_sync
+	set_false_path -to [get_clocks -of $ki_clk] 
 
 	set_max_delay -datapath_only [get_property PERIOD [get_clocks -of $cdc_sync]] -from $di_trg
 
@@ -144,6 +151,7 @@ foreach cc $comp_clk_CLK2NCL {
 	group_path -name "KI_CLK_FORCE_SKEW" -from $ki_src -to [get_pins -filter "DIRECTION == IN" -of $cc]
 
 	set_false_path -from [get_clocks -of $ki_clk] -to $cdc_sync
+	set_false_path -to [get_clocks -of $ki_clk]
 }
 
 foreach clk [get_clocks] {
@@ -274,6 +282,7 @@ set isoforks [get_cells -hierarchical QDI_ISOFORK]
 # isofork constraints
 set isofork_id 0
 create_property -type string QDI_ISOFORK_GRPS  pin
+create_property -type bool   QDI_ISOFORK       pin
 create_property -type bool   QDI_ISOFORK_COLOC cell
 
 set_property DONT_TOUCH false $isoforks
@@ -290,6 +299,7 @@ foreach cc $isoforks {
 		set_property QDI_ISOFORK_GRPS  $grp  $tt
 	}
 	
+	set_property QDI_ISOFORK       true  $trgs
 	set_property QDI_ISOFORK_COLOC false [get_cells -of $trgs]
 
 	lappend isofork_lut [get_cells -of $trgs]

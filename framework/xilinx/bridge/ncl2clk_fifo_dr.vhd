@@ -63,7 +63,6 @@ begin
 		'1' when w_ptr(0) & not w_ptr(1) = r_ptr else
 		'0';
 	
-	ko <= ko_int;
 	ko_int <= not full and not ki; -- ki is internally inverted
 	
 	do  <= buf(to_integer(unsigned(r_ptr)));
@@ -73,7 +72,8 @@ begin
 		generic map (
 			INIT => "10"
 		) port map (
-			I0 => ko_int
+			I0 => ko_int,
+			O  => ko
 		);
 	
 	ki_buf: BUFH

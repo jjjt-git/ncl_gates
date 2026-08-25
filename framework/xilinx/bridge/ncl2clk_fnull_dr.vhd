@@ -50,13 +50,13 @@ begin
 	valid <= valid_int;
 	
 	ko_int <= not (written xor read) and not ki; -- ki is internally inverted
-	ko <= ko_int;
 	
 	ko_mark: LUT1
 		generic map (
 			INIT => "10"
 		) port map (
-			I0 => ko_int
+			I0 => ko_int,
+			O  => ko
 		);
 	
 	ki_buf: BUFH
