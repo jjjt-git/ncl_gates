@@ -205,7 +205,11 @@ foreach cc $inbridge_enc {
 
 	set val_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_VALID_PIN $cc]"]
 	set dat_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_DATA_PIN $cc]"]
-	set ki_pin  [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_KI_PIN $cc]"]
+	if {[get_property NCL_IN_ENC_KI_PIN $cc] != "none"} {
+		set ki_pin [get_pins -of $cc -filter "REF_PIN_NAME == [get_property NCL_IN_ENC_KI_PIN $cc]"]
+	} else {
+		set ki_pin ""
+	}
 
 	set edge_conf [get_property NCL_IN_ENC_DATA2VALID_EDGES $cc]
 
@@ -260,7 +264,7 @@ foreach cc $ack {
 	set ack_src [get_pins -of $net -filter "IS_LEAF && DIRECTION == OUT"]
 
 	set pc [get_cells -of $ack_src]
-	set pfb [get_pins -of [get_nets -of $ack_src] -filter "DIRECTION == IN"]
+	set pfb [get_pins -of $net -filter "PARENT_CELL == $pc && DIRECTION == IN"]
 
 	set ack_snk [get_pins -of $pc -filter "NAME != $pfb && DIRECTION == IN"]
 
@@ -419,4 +423,3 @@ foreach isoset $isofork_lut {
 
 set_property DONT_TOUCH false $markers
 remove_cell $markers
-

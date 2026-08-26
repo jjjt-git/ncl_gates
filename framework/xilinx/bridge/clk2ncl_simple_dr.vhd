@@ -22,14 +22,18 @@ end clk2ncl_simple_dr;
 architecture Behavioural of clk2ncl_simple_dr is
 	attribute NCL_WIRE_TYPE               : string;
 	attribute NCL_IN_ENC_DATA2VALID_EDGES : string;
-	attribute NCL_IN_ENC_CLK_VALID_PIN    : string;
+	attribute NCL_IN_ENC_VALID_PIN        : string;
 	attribute NCL_IN_ENC_DATA_PIN         : string;
+	attribute NCL_IN_ENC_KI_PIN           : string;
 	attribute NCL_IN_ENC_REG              : string;
 	
 	attribute DONT_TOUCH : boolean;
 	attribute ASYNC_REG  : boolean;
 	attribute KEEP       : boolean;
 	attribute HLUTNM     : string;
+	
+	attribute KEEP_HIERARCHY : string;
+	attribute KEEP_HIERARCHY of Behavioural : architecture is "TRUE";
 	
 	signal do_1m, do_0m, d_r : std_logic_vector(dr_width - 1 downto 0);
 	signal v_r : std_logic;
@@ -64,11 +68,14 @@ begin
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d0 : label is "fr";
 		attribute NCL_IN_ENC_DATA2VALID_EDGES of d1 : label is "fr";
 		
-		attribute NCL_IN_ENC_CLK_VALID_PIN of d0 : label is "I0";
-		attribute NCL_IN_ENC_CLK_VALID_PIN of d1 : label is "I0";
+		attribute NCL_IN_ENC_VALID_PIN of d0 : label is "I0";
+		attribute NCL_IN_ENC_VALID_PIN of d1 : label is "I0";
 		
 		attribute NCL_IN_ENC_DATA_PIN of d0 : label is "I1";
 		attribute NCL_IN_ENC_DATA_PIN of d1 : label is "I1";
+
+		attribute NCL_IN_ENC_KI_PIN of d0 : label is "none";
+		attribute NCL_IN_ENC_KI_PIN of d1 : label is "none";
 		
 		attribute HLUTNM of d0 : label is "enc" & integer'image(ii);
 		attribute HLUTNM of d1 : label is "enc" & integer'image(ii);

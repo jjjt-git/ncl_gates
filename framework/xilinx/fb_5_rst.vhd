@@ -19,6 +19,9 @@ architecture Structural of fb_5_rst is
 	attribute DONT_TOUCH                    : boolean;
 	attribute DONT_TOUCH of NCL_GATE_EXTRST : label is true;
 	
+	attribute KEEP_HIERARCHY : string;
+	attribute KEEP_HIERARCHY of Structural : architecture is "SOFT";
+	
 	constant FB_VALUE     : bit_vector(63 downto 0) := x"FFFF_FFFF_0000_0000"; -- I5 is FB
 	constant CLEAR_F_SET  : bit_vector(63 downto 0) := CLEAR_SET & CLEAR_SET;
 	constant ASSERT_F_SET : bit_vector(63 downto 0) := ASSERT_SET & ASSERT_SET;

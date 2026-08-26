@@ -27,6 +27,10 @@ architecture Behavioural of ncl2clk_fifo_dr is
 	attribute KEEP          : boolean;
 	attribute ASYNC_REG     : boolean;
 	
+	attribute KEEP_HIERARCHY : string;
+	attribute KEEP_HIERARCHY of Behavioural : architecture is "TRUE";
+	attribute KEEP_HIERARCHY of comp        : label is "SOFT";
+	
 	signal ki_vec, do : std_logic_vector(dr_width - 1 downto 0);
 	
 	signal ki, ki_clk, ko_int : std_logic;

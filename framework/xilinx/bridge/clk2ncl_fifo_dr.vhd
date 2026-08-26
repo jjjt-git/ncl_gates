@@ -32,6 +32,9 @@ architecture Behavioural of clk2ncl_fifo_dr is
 	attribute ASYNC_REG  : boolean;
 	attribute KEEP       : boolean;
 	attribute HLUTNM     : string;
+	
+	attribute KEEP_HIERARCHY : string;
+	attribute KEEP_HIERARCHY of Behavioural : architecture is "TRUE";
 
 	signal empty, full : std_logic;
 

@@ -24,6 +24,10 @@ architecture Behavioural of ncl2clk_simple_dr is
 	attribute DONT_TOUCH    : boolean;
 	attribute ASYNC_REG     : boolean;
 	
+	attribute KEEP_HIERARCHY : string;
+	attribute KEEP_HIERARCHY of Behavioural : architecture is "TRUE";
+	attribute KEEP_HIERARCHY of comp        : label is "SOFT";
+	
 	signal ki, ki_p, ki_s, ki_sp : std_logic;
 	
 	attribute ASYNC_REG of ki_rm : label is true;
