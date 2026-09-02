@@ -8,10 +8,8 @@
 
 
 library IEEE;
-library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
-use UNISIM.VComponents.all;
 
 entity TH12 is
     port ( A : in STD_LOGIC;

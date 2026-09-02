@@ -7,10 +7,8 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
-use UNISIM.VComponents.all;
 
 entity TH22n_22n_SA_AA is
 	port (

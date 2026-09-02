@@ -7,13 +7,11 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
-use UNISIM.VComponents.all;
 
-library ncl_gates;
-use ncl_gates.MACRO_CONFIG.all;
+library qdi_framework;
+use qdi_framework.MACRO_CONFIG.all;
 
 entity TH34w3n is
     port ( A : in STD_LOGIC;
@@ -27,7 +25,7 @@ end TH34w3n;
 architecture Structural of TH34w3n is
 begin
 
-	gate: entity ncl_gates.fb_4_rst
+	gate: entity qdi_framework.fb_4_rst
 		generic map (
 			RST_VALUE => '0',
 			ASSERT_SET => A5 or (B5 and C5 and D5) 

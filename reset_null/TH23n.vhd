@@ -7,13 +7,11 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
-use UNISIM.VComponents.all;
 
-library ncl_gates;
-use ncl_gates.MACRO_CONFIG.all;
+library qdi_framework;
+use qdi_framework.MACRO_CONFIG.all;
 
 entity TH23n is
     port ( A : in STD_LOGIC;
@@ -26,7 +24,7 @@ end TH23n;
 architecture Structural of TH23n is
 begin
 
-	gate: entity ncl_gates.fb_3_rst
+	gate: entity qdi_framework.fb_3_rst
 		generic map (
 			RST_VALUE => '0',
 			ASSERT_SET => (A5 and B5) or (A5 and C5) or (B5 and C5)

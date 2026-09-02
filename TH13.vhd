@@ -7,13 +7,11 @@
 ----------------------------------------------------------------------------------
 
 library IEEE;
-library UNISIM;
 
 use IEEE.STD_LOGIC_1164.ALL;
-use UNISIM.VComponents.all;
 
-library ncl_gates;
-use ncl_gates.MACRO_CONFIG.all;
+library qdi_framework;
+use qdi_framework.MACRO_CONFIG.all;
 
 entity TH13 is
     port ( A : in STD_LOGIC;
